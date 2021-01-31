@@ -11,3 +11,5 @@
 
 void userInput();
 void createTokens(char *userInput);
+void readArguments(char arguments[512][2048], int length);
+void expandVariable(char *variable);
