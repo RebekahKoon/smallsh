@@ -12,5 +12,5 @@
 void userInput();
 void createTokens(char *userInput);
 void readArguments(char arguments[512][2048], int length);
-void expandVariable(char *variable);
+char *expandVariable(char *variable);
 void changeDirectory(char *path, int numArguments);

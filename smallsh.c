@@ -10,6 +10,7 @@ void userInput() {
     while (strcmp(input, "exit") != 0) {
         printf(": ");
         fgets(input, 256, stdin);
+        fflush(stdin);
 
         if (strlen(input) > 0 && (input[strlen(input) - 1] == '\n')) {
             input[strlen(input) - 1] = '\0';
@@ -61,11 +62,13 @@ void readArguments(char arguments[512][2048], int length) {
     //     expandVariable(command);
     // }
 
-    printf("%d", length);
+    // printf("%d", length);
+    char *expandedVar;
 
     for (int i = 0; i < length; i++) {
         if (strstr(arguments[i], "$$") != NULL) {
-            expandVariable(arguments[i]);
+            expandedVar = expandVariable(arguments[i]);
+            printf("%s\n", expandedVar);
         } else if (strcmp(arguments[i], "cd") == 0) {
             // printf("%s %s\n", arguments[i], arguments[i + 1]);
             changeDirectory(arguments[i + 1], length);
@@ -77,19 +80,34 @@ void readArguments(char arguments[512][2048], int length) {
 /*
  *
  **/
-void expandVariable(char *variable) {
+char *expandVariable(char *variable) {
     int length = strlen(variable);
+    char *expandedVar = malloc(sizeof(char) * 2048);
+    char strPointer = 0;
+
+    // for (int i = 0; i < length; i++) {
+    //     if (variable[i] == '$' && i < length - 1 && variable[i + 1] == '$') {
+    //         printf("%d", getpid());
+    //         i++;
+    //     } else {
+    //         printf("%c", variable[i]);
+    //     }
+    // }
 
     for (int i = 0; i < length; i++) {
         if (variable[i] == '$' && i < length - 1 && variable[i + 1] == '$') {
-            printf("%d", getpid());
+            sprintf(expandedVar, "%s%d", expandedVar, getpid());
+            // strPointer = strlen(expandedVar) - 1;
             i++;
         } else {
-            printf("%c", variable[i]);
+            // expandedVar[strPointer] = variable[strPointer];
+            sprintf(expandedVar, "%s%c", expandedVar, variable[i]);
         }
     }
 
-    printf("\n");
+    // printf("%s\n", expandedVar);
+
+    return expandedVar;
 }
 
 
@@ -103,13 +121,18 @@ void changeDirectory(char *path, int numArguments) {
     //     printf("%s\n", path);
     // }
     char *directory;
+    char cwd[PATH_MAX];
 
     if (numArguments == 1) {
         directory = getenv("HOME");
         chdir(directory);
-        printf("1\n");
+        getcwd(cwd, sizeof(cwd));
+        printf("%s\n", cwd);
+        // printf("1\n");
     } else {
-        printf("2\n");
         chdir(path);
+        getcwd(cwd, sizeof(cwd));
+        printf("%s\n", cwd);
+        // printf("2\n");
     }
 }
