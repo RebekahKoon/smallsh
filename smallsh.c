@@ -64,6 +64,7 @@ void readArguments(char arguments[512][2048], int length) {
 
     // printf("%d", length);
     char *expandedVar;
+    int status = 0;
 
     for (int i = 0; i < length; i++) {
         if (strstr(arguments[i], "$$") != NULL) {
@@ -72,6 +73,8 @@ void readArguments(char arguments[512][2048], int length) {
         } else if (strcmp(arguments[i], "cd") == 0) {
             // printf("%s %s\n", arguments[i], arguments[i + 1]);
             changeDirectory(arguments[i + 1], length);
+        } else if (strcmp(arguments[i], "status") == 0) {
+            findStatus(status);
         }
     }
 }
@@ -142,5 +145,18 @@ void changeDirectory(char *path, int numArguments) {
         getcwd(cwd, sizeof(cwd));
         printf("%s\n", cwd);
         // printf("2\n");
+    }
+}
+
+
+/*
+ *
+ * Source: https://canvas.oregonstate.edu/courses/1798831/pages/exploration-process-api-monitoring-child-processes?module_item_id=20163874
+ **/
+void findStatus(int status) {
+    if (WIFEXITED(status)) {
+        printf("exit value %d\n", WEXITSTATUS(status));
+    } else {
+        printf("terminated by signal %d\n", WTERMSIG(status));
     }
 }
