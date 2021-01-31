@@ -113,6 +113,7 @@ char *expandVariable(char *variable) {
 
 /*
  *
+ * Source: https://stackoverflow.com/questions/298510/how-to-get-the-current-directory-in-a-c-program
  **/
 void changeDirectory(char *path, int numArguments) {
     // if (path != NULL) {
@@ -122,6 +123,7 @@ void changeDirectory(char *path, int numArguments) {
     // }
     char *directory;
     char cwd[PATH_MAX];
+    char *expandedVar;
 
     if (numArguments == 1) {
         directory = getenv("HOME");
@@ -129,6 +131,12 @@ void changeDirectory(char *path, int numArguments) {
         getcwd(cwd, sizeof(cwd));
         printf("%s\n", cwd);
         // printf("1\n");
+    } else if (strstr(path, "$$") != NULL) {
+        expandedVar = expandVariable(path);
+        printf("%s\n", expandedVar);
+        chdir(path);
+        getcwd(cwd, sizeof(cwd));
+        printf("%s\n", cwd);
     } else {
         chdir(path);
         getcwd(cwd, sizeof(cwd));
