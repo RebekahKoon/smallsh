@@ -49,6 +49,7 @@ void createTokens(char *userInput) {
     }
 
     readArguments(arguments, length);
+    strcmp(arguments[1], "");
 }
 
 
@@ -60,9 +61,14 @@ void readArguments(char arguments[512][2048], int length) {
     //     expandVariable(command);
     // }
 
+    printf("%d", length);
+
     for (int i = 0; i < length; i++) {
         if (strstr(arguments[i], "$$") != NULL) {
             expandVariable(arguments[i]);
+        } else if (strcmp(arguments[i], "cd") == 0) {
+            // printf("%s %s\n", arguments[i], arguments[i + 1]);
+            changeDirectory(arguments[i + 1], length);
         }
     }
 }
@@ -84,4 +90,26 @@ void expandVariable(char *variable) {
     }
 
     printf("\n");
+}
+
+
+/*
+ *
+ **/
+void changeDirectory(char *path, int numArguments) {
+    // if (path != NULL) {
+    //     printf("Hi\n");
+    // } else {
+    //     printf("%s\n", path);
+    // }
+    char *directory;
+
+    if (numArguments == 1) {
+        directory = getenv("HOME");
+        chdir(directory);
+        printf("1\n");
+    } else {
+        printf("2\n");
+        chdir(path);
+    }
 }
