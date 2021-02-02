@@ -7,7 +7,21 @@
 void userInput() {
     char input[2048] = "";
 
+    struct sigaction SIGINT_action = {0};
+    SIGINT_action.sa_handler = handle_SIGINT;
+    sigfillset(&SIGINT_action.sa_mask);
+    SIGINT_action.sa_flags = 0;
+    sigaction(SIGINT, &SIGINT_action, NULL);
+
+    struct sigaction SIGTSTP_action = {0};
+    SIGTSTP_action.sa_handler = handle_SIGTSTP;
+    sigfillset(&SIGTSTP_action.sa_mask);
+    SIGTSTP_action.sa_flags = 0;
+    sigaction(SIGTSTP, &SIGTSTP_action, NULL);
+
     while (strcmp(input, "exit") != 0) {
+        fflush(stdin);
+        fflush(stdout);
         printf(": ");
         fgets(input, 256, stdin);
         fflush(stdin);
@@ -50,7 +64,10 @@ void createTokens(char *userInput) {
     }
 
     readArguments(arguments, length);
-    strcmp(arguments[1], "");
+    
+    for (int i = 0; i < length; i++) {
+        strcpy(arguments[i], "");
+    }
 }
 
 
@@ -65,17 +82,46 @@ void readArguments(char arguments[512][2048], int length) {
     // printf("%d", length);
     char *expandedVar;
     int status = 0;
+    // int builtIn = 0;
 
-    for (int i = 0; i < length; i++) {
-        if (strstr(arguments[i], "$$") != NULL) {
-            expandedVar = expandVariable(arguments[i]);
-            printf("%s\n", expandedVar);
-        } else if (strcmp(arguments[i], "cd") == 0) {
-            // printf("%s %s\n", arguments[i], arguments[i + 1]);
-            changeDirectory(arguments[i + 1], length);
-        } else if (strcmp(arguments[i], "status") == 0) {
-            findStatus(status);
-        }
+    // for (int i = 0; i < length; i++) {
+    //     if (strstr(arguments[i], "$$") != NULL) {
+    //         expandedVar = expandVariable(arguments[i]);
+    //         builtIn = 1;
+    //         printf("%s\n", expandedVar);
+    //     } else if (strcmp(arguments[i], "cd") == 0) {
+    //         // printf("%s %s\n", arguments[i], arguments[i + 1]);
+    //         changeDirectory(arguments[i + 1], length);
+    //         builtIn = 1;
+    //     } else if (strcmp(arguments[i], "status") == 0) {
+    //         findStatus(status);
+    //         builtIn = 1;
+    //     } else if (strcmp(arguments[i], "exit") == 0) {
+    //         builtIn = 1;
+    //     }
+    // }
+
+    // if (builtIn == 0) {
+    //     executeOtherCommand(arguments, length, status);
+    // }
+
+    if (strstr(arguments[0], "$$") != NULL) {
+        expandedVar = expandVariable(arguments[0]);
+        // builtIn = 1;
+        printf("%s\n", expandedVar);
+    } else if (strcmp(arguments[0], "cd") == 0) {
+        // printf("%s %s\n", arguments[i], arguments[i + 1]);
+        changeDirectory(arguments[1], length);
+        // builtIn = 1;
+    } else if (strcmp(arguments[0], "status") == 0) {
+        findStatus(status);
+        // builtIn = 1;
+    } else if (strcmp(arguments[0], "exit") == 0) {
+        // builtIn = 1;
+        printf("\n");
+    } else {
+        executeOtherCommand(arguments, length, status);
+        printf("\n");
     }
 }
 
@@ -86,7 +132,7 @@ void readArguments(char arguments[512][2048], int length) {
 char *expandVariable(char *variable) {
     int length = strlen(variable);
     char *expandedVar = malloc(sizeof(char) * 2048);
-    char strPointer = 0;
+    // char strPointer = 0;
 
     // for (int i = 0; i < length; i++) {
     //     if (variable[i] == '$' && i < length - 1 && variable[i + 1] == '$') {
@@ -159,4 +205,67 @@ void findStatus(int status) {
     } else {
         printf("terminated by signal %d\n", WTERMSIG(status));
     }
+}
+
+
+/* 
+ *
+ * Sources: https://canvas.oregonstate.edu/courses/1798831/pages/exploration-process-api-creating-and-terminating-processes?module_item_id=20163873
+ *          https://canvas.oregonstate.edu/courses/1798831/pages/exploration-process-api-monitoring-child-processes?module_item_id=20163874
+ **/
+int executeOtherCommand(char arguments[512][2048], int length, int status) {
+    pid_t spawnPid = -5;
+    pid_t childPid;
+
+    spawnPid = fork();
+    switch (spawnPid)
+    {
+    case -1:
+        perror("fork() failed!\n");
+        exit(1);
+        fflush(stdout);
+        break;
+
+    case 0:
+        printf("child process\n");
+        // if (execvp(arguments[0], (char * const*)arguments)) {
+        //     printf("%s: no such file or directory\n", arguments[0]);
+        // }
+
+        execlp(arguments[0], arguments[0], arguments[1], NULL);
+        // perror("execve");
+        fflush(stdout);
+        exit(1);
+        break;
+    
+    default:
+        childPid = waitpid(spawnPid, &status, 0);
+        printf("parent process\n");
+        fflush(stdout);
+        break;
+    }
+
+    return status;
+}
+
+
+/*
+ *
+ * Source: https://canvas.oregonstate.edu/courses/1798831/pages/exploration-signal-handling-api?module_item_id=20163882
+ **/
+void handle_SIGINT(int signal) {
+	char* message = "Caught SIGINT, sleeping for 1 second\n";
+	write(STDOUT_FILENO, message, 39);
+	sleep(1);
+}
+
+
+/*
+ *
+ * Source: https://canvas.oregonstate.edu/courses/1798831/pages/exploration-signal-handling-api?module_item_id=20163882
+ **/
+void handle_SIGTSTP(int signal) {
+	char* message = "Caught SIGTSTP, sleeping for 1 second\n";
+	write(STDOUT_FILENO, message, 39);
+	sleep(1);
 }
