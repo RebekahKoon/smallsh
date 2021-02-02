@@ -216,6 +216,11 @@ void findStatus(int status) {
 int executeOtherCommand(char arguments[512][2048], int length, int status) {
     pid_t spawnPid = -5;
     pid_t childPid;
+    char *commandArgs[512] = {NULL};
+
+    for (int i = 0; i < length; i++) {
+        commandArgs[i] = arguments[i];
+    }
 
     spawnPid = fork();
     switch (spawnPid)
@@ -228,11 +233,11 @@ int executeOtherCommand(char arguments[512][2048], int length, int status) {
 
     case 0:
         printf("child process\n");
-        // if (execvp(arguments[0], (char * const*)arguments)) {
-        //     printf("%s: no such file or directory\n", arguments[0]);
-        // }
+        if (execvp(commandArgs[0], commandArgs)) {
+            printf("%s: no such file or directory\n", arguments[0]);
+        }
 
-        execlp(arguments[0], arguments[0], arguments[1], NULL);
+        // execlp(arguments[0], arguments[0], arguments[1], NULL);
         // perror("execve");
         fflush(stdout);
         exit(1);
@@ -243,6 +248,10 @@ int executeOtherCommand(char arguments[512][2048], int length, int status) {
         printf("parent process\n");
         fflush(stdout);
         break;
+    }
+
+    for (int i = 0; i < length; i++) {
+        commandArgs[i] = NULL;
     }
 
     return status;
