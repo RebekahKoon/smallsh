@@ -42,8 +42,8 @@ void createTokens(char *userInput) {
     char *token;
     char *currPosition;
     char *argument;
-    char inputFile[256];
-    char outputFile[256];
+    // char *inputFile;
+    // char *outputFile;
     char arguments[512][2048];
     int length = 0;
 
@@ -64,13 +64,13 @@ void createTokens(char *userInput) {
         strcpy(argument, token);
         strcpy(arguments[length], argument);
 
-        if (length > 0 && !strcmp(arguments[length - 1], "<")) {
-            strcpy(inputFile, argument);
-            printf("%s", inputFile);
-        } else if (length > 0 && !strcmp(arguments[length - 1], ">")) {
-            strcpy(outputFile, argument);
-            printf("%s", outputFile);
-        }
+        // if (length > 0 && !strcmp(arguments[length - 1], "<")) {
+        //     strcpy(inputFile, argument);
+        //     printf("%s", inputFile);
+        // } else if (length > 0 && !strcmp(arguments[length - 1], ">")) {
+        //     strcpy(outputFile, argument);
+        //     printf("%s", outputFile);
+        // }
 
         free(argument);
         length++;
@@ -90,7 +90,7 @@ void createTokens(char *userInput) {
     // printf("%s", inputFile);
     // printf("%s", outputFile);
 
-    // readArguments(arguments, length, inputFile, outputFile);
+    readArguments(arguments, length);
     
     // free(inputFile);
     // free(outputFile);
@@ -103,7 +103,7 @@ void createTokens(char *userInput) {
 /*
  *
  **/
-void readArguments(char arguments[512][2048], int length, char *inputFile, char *outputFile) {
+void readArguments(char arguments[512][2048], int length) {
     // if (strstr(command, "$$") != NULL) {
     //     expandVariable(command);
     // }
@@ -112,6 +112,18 @@ void readArguments(char arguments[512][2048], int length, char *inputFile, char 
     char *expandedVar;
     int status = 0;
     // int builtIn = 0;
+    char *inputFile = malloc(sizeof(char) * 256);
+    char *outputFile = malloc(sizeof(char) * 256);
+
+    for (int i = 0; i < length; i++) {
+        if (!strcmp(arguments[i], "<")) {
+            strcpy(inputFile, arguments[i + 1]);
+            printf("%s", inputFile);
+        } else if (!strcmp(arguments[i], ">")) {
+            strcpy(outputFile, arguments[i + 1]);
+            printf("%s", outputFile);
+        }
+    }
 
     // for (int i = 0; i < length; i++) {
     //     if (strstr(arguments[i], "$$") != NULL) {
@@ -152,6 +164,9 @@ void readArguments(char arguments[512][2048], int length, char *inputFile, char 
         executeOtherCommand(arguments, length, status, inputFile, outputFile);
         printf("\n");
     }
+
+    free(inputFile);
+    free(outputFile);
 }
 
 
