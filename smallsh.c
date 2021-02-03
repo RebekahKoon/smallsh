@@ -311,6 +311,7 @@ int executeOtherCommand(char *arguments[], int length, int status, char *inputFi
 
     for (int i = 0; i < length; i++) {
         commandArgs[i] = arguments[i];
+        // printf("%s %s", commandArgs[i], arguments[i]);
     }
 
     spawnPid = fork();
@@ -372,11 +373,12 @@ int executeOtherCommand(char *arguments[], int length, int status, char *inputFi
             fcntl(targetFD, F_SETFD, FD_CLOEXEC);
         }
 
-        // if (strcmp(outputFile, "") || strcmp(inputFile, "")) {
+        // if (outputFile == NULL && inputFile == NULL) {
         //     char *fileCommand[1];
-        //     fileCommand[1] = "ls";
+        //     fileCommand[0] = "ls";
+        //     printf("hi");
 
-        //     if (execvp(fileCommand[0], fileCommand)) {
+        //     if (execvp("ls", fileCommand)) {
         //         printf("%s: no such file or directory\n", arguments[0]);
         //         fflush(stdout);
         //         exit(1);
@@ -395,7 +397,7 @@ int executeOtherCommand(char *arguments[], int length, int status, char *inputFi
         break;
     
     default:
-        // fflush(stdout);
+        fflush(stdout);
         childPid = waitpid(spawnPid, &status, 0);
         // findStatus(status);
         fflush(stdout);
