@@ -13,7 +13,7 @@
 
 void userInput();
 void createTokens(char *userInput);
-void readArguments(char *arguments[], int length);
+void readArguments(char *arguments[], int length, char *inputFile, char *outputFile);
 char *expandVariable(char *variable);
 void changeDirectory(char *path, int numArguments);
 void findStatus(int status);

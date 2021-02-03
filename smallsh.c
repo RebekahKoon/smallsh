@@ -40,9 +40,9 @@ void userInput() {
 void createTokens(char *userInput) {
     char *token;
     char *currPosition;
-    char *argument;
-    // char *inputFile;
-    // char *outputFile;
+    // char *argument;
+    char *inputFile;
+    char *outputFile;
     char *arguments[512];
     int length = 0;
 
@@ -59,22 +59,36 @@ void createTokens(char *userInput) {
     // free(argument);
 
     while ((token) != NULL && userInput[0] != '#') {
-        argument = calloc(strlen(token) + 1, sizeof(char));
-        strcpy(argument, token);
-        arguments[length] = token;
+        // argument = calloc(strlen(token) + 1, sizeof(char));
+        // strcpy(argument, token);
 
-        // if (length > 0 && !strcmp(arguments[length - 1], "<")) {
-        //     strcpy(inputFile, argument);
-        //     printf("%s", inputFile);
-        // } else if (length > 0 && !strcmp(arguments[length - 1], ">")) {
-        //     strcpy(outputFile, argument);
-        //     printf("%s", outputFile);
-        // }
+        if (!strcmp(token, "<")) {
+            token = strtok_r(NULL, " ", &currPosition);
+            inputFile = token;
+        } else if (!strcmp(token, ">")) {
+            token = strtok_r(NULL, " ", &currPosition);
+            outputFile = token;
+        } else {
+            arguments[length] = token;
 
-        free(argument);
-        length++;
+            // if (length > 0 && !strcmp(arguments[length - 1], "<")) {
+            //     strcpy(inputFile, argument);
+            //     printf("%s", inputFile);
+            // } else if (length > 0 && !strcmp(arguments[length - 1], ">")) {
+            //     strcpy(outputFile, argument);
+            //     printf("%s", outputFile);
+            // }
+
+            // free(argument);
+            length++;
+        }
+
         token = strtok_r(NULL, " ", &currPosition);
     }
+
+    // for (int i = 0; i < length; i++) {
+    //     printf("%s", arguments[i]);
+    // }
 
     // for (int i = 0; i < length; i++) {
     //     if (!strcmp(arguments[i], "<")) {
@@ -89,7 +103,7 @@ void createTokens(char *userInput) {
     // printf("%s", inputFile);
     // printf("%s", outputFile);
 
-    readArguments(arguments, length);
+    readArguments(arguments, length, inputFile, outputFile);
     
     // free(inputFile);
     // free(outputFile);
@@ -102,7 +116,7 @@ void createTokens(char *userInput) {
 /*
  *
  **/
-void readArguments(char *arguments[], int length) {
+void readArguments(char *arguments[], int length, char *inputFile, char *outputFile) {
     // if (strstr(command, "$$") != NULL) {
     //     expandVariable(command);
     // }
@@ -111,21 +125,21 @@ void readArguments(char *arguments[], int length) {
     char *expandedVar;
     int status = 0;
     // int builtIn = 0;
-    char *inputFile = malloc(sizeof(char) * 256);
-    char *outputFile = malloc(sizeof(char) * 256);
+    // char *inputFile = malloc(sizeof(char) * 256);
+    // char *outputFile = malloc(sizeof(char) * 256);
 
-    strcpy(inputFile, "");
-    strcpy(outputFile, "");
+    // strcpy(inputFile, "");
+    // strcpy(outputFile, "");
 
-    for (int i = 0; i < length; i++) {
-        if (!strcmp(arguments[i], "<")) {
-            strcpy(inputFile, arguments[i + 1]);
-            // printf("%s", inputFile);
-        } else if (!strcmp(arguments[i], ">")) {
-            strcpy(outputFile, arguments[i + 1]);
-            // printf("%s", outputFile);
-        }
-    }
+    // for (int i = 0; i < length; i++) {
+    //     if (!strcmp(arguments[i], "<")) {
+    //         strcpy(inputFile, arguments[i + 1]);
+    //         // printf("%s", inputFile);
+    //     } else if (!strcmp(arguments[i], ">")) {
+    //         strcpy(outputFile, arguments[i + 1]);
+    //         // printf("%s", outputFile);
+    //     }
+    // }
 
     // for (int i = 0; i < length; i++) {
     //     if (strstr(arguments[i], "$$") != NULL) {
@@ -172,6 +186,10 @@ void readArguments(char *arguments[], int length) {
         //     // printf("%s hi", arguments[i]);
         // }
 
+        // for (int i = 0; i < length; i++) {
+        //     printf("%s %d", arguments[i], length);
+        // }
+
         executeOtherCommand(arguments, length, status, inputFile, outputFile);
         printf("\n");
         fflush(stdout);
@@ -181,8 +199,8 @@ void readArguments(char *arguments[], int length) {
         // }
     }
 
-    free(inputFile);
-    free(outputFile);
+    // free(inputFile);
+    // free(outputFile);
 }
 
 
@@ -293,7 +311,6 @@ int executeOtherCommand(char *arguments[], int length, int status, char *inputFi
 
     for (int i = 0; i < length; i++) {
         commandArgs[i] = arguments[i];
-        // printf("%s ", arguments[i]);
     }
 
     spawnPid = fork();
@@ -315,7 +332,7 @@ int executeOtherCommand(char *arguments[], int length, int status, char *inputFi
         // }
 
         // If input file argument
-        if (strcmp(inputFile, "")) {
+        if (inputFile != NULL) {
             sourceFD = open(inputFile, O_RDONLY);
             if (sourceFD == -1) { 
                 perror("source open()");
@@ -335,7 +352,7 @@ int executeOtherCommand(char *arguments[], int length, int status, char *inputFi
         }
 
         // If output file argument
-        if (strcmp(outputFile, "")) {
+        if (outputFile != NULL) {
             // Open target file
             targetFD = open(outputFile, O_WRONLY | O_CREAT | O_TRUNC, 0666);
             if (targetFD == -1) { 
@@ -355,18 +372,18 @@ int executeOtherCommand(char *arguments[], int length, int status, char *inputFi
             fcntl(targetFD, F_SETFD, FD_CLOEXEC);
         }
 
-        if (strcmp(outputFile, "") || strcmp(inputFile, "")) {
-            char *fileCommand[1];
-            fileCommand[1] = "ls";
+        // if (strcmp(outputFile, "") || strcmp(inputFile, "")) {
+        //     char *fileCommand[1];
+        //     fileCommand[1] = "ls";
 
-            if (execvp(fileCommand[0], fileCommand)) {
-                printf("%s: no such file or directory\n", arguments[0]);
-                fflush(stdout);
-                exit(1);
-            }
-        }
+        //     if (execvp(fileCommand[0], fileCommand)) {
+        //         printf("%s: no such file or directory\n", arguments[0]);
+        //         fflush(stdout);
+        //         exit(1);
+        //     }
+        // }
 
-         else if (execvp(commandArgs[0], commandArgs)) {
+        if (execvp(commandArgs[0], commandArgs)) {
             printf("%s: no such file or directory\n", arguments[0]);
             fflush(stdout);
             exit(1);
