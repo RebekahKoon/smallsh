@@ -41,8 +41,8 @@ void createTokens(char *userInput) {
     char *token;
     char *currPosition;
     // char *argument;
-    char *inputFile;
-    char *outputFile;
+    char *inputFile = NULL;
+    char *outputFile = NULL;
     char *arguments[512];
     int length = 0;
 
