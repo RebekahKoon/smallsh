@@ -13,10 +13,10 @@
 
 void userInput();
 void createTokens(char *userInput);
-void readArguments(char arguments[512][2048], int length);
+void readArguments(char *arguments[], int length);
 char *expandVariable(char *variable);
 void changeDirectory(char *path, int numArguments);
 void findStatus(int status);
-int executeOtherCommand(char arguments[512][2048], int length, int status, char *inputFile, char *outputFile);
+int executeOtherCommand(char *arguments[], int length, int status, char *inputFile, char *outputFile);
 void handle_SIGINT(int signal);
 void handle_SIGTSTP(int signal);
