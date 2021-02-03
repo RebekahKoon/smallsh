@@ -42,9 +42,15 @@ void createTokens(char *userInput) {
     char *token;
     char *currPosition;
     char *argument;
+    char inputFile[256];
+    char outputFile[256];
     char arguments[512][2048];
     int length = 0;
 
+    // inputFile = malloc(sizeof(char) * 256);
+    // outputFile = malloc(sizeof(char) * 256);
+    // inputFile = NULL;
+    // outputFile = NULL;
     token = strtok_r(userInput, " ", &currPosition);
     // argument = calloc(strlen(token) + 1, sizeof(char));
     // strcpy(argument, token);
@@ -57,14 +63,37 @@ void createTokens(char *userInput) {
         argument = calloc(strlen(token) + 1, sizeof(char));
         strcpy(argument, token);
         strcpy(arguments[length], argument);
-        length++;
-        free(argument);
 
+        if (length > 0 && !strcmp(arguments[length - 1], "<")) {
+            strcpy(inputFile, argument);
+            printf("%s", inputFile);
+        } else if (length > 0 && !strcmp(arguments[length - 1], ">")) {
+            strcpy(outputFile, argument);
+            printf("%s", outputFile);
+        }
+
+        free(argument);
+        length++;
         token = strtok_r(NULL, " ", &currPosition);
     }
 
-    readArguments(arguments, length);
+    // for (int i = 0; i < length; i++) {
+    //     if (!strcmp(arguments[i], "<")) {
+    //         strcpy(inputFile, arguments[i + 1]);
+    //         printf("%s", inputFile);
+    //     } else if (!strcmp(arguments[i], ">")) {
+    //         strcpy(outputFile, arguments[i + 1]);
+    //         printf("%s", outputFile);
+    //     }
+    // }
+
+    // printf("%s", inputFile);
+    // printf("%s", outputFile);
+
+    // readArguments(arguments, length, inputFile, outputFile);
     
+    // free(inputFile);
+    // free(outputFile);
     for (int i = 0; i < length; i++) {
         strcpy(arguments[i], "");
     }
@@ -74,7 +103,7 @@ void createTokens(char *userInput) {
 /*
  *
  **/
-void readArguments(char arguments[512][2048], int length) {
+void readArguments(char arguments[512][2048], int length, char *inputFile, char *outputFile) {
     // if (strstr(command, "$$") != NULL) {
     //     expandVariable(command);
     // }
@@ -120,7 +149,7 @@ void readArguments(char arguments[512][2048], int length) {
         // builtIn = 1;
         printf("\n");
     } else {
-        executeOtherCommand(arguments, length, status);
+        executeOtherCommand(arguments, length, status, inputFile, outputFile);
         printf("\n");
     }
 }
@@ -214,7 +243,7 @@ void findStatus(int status) {
  *          https://canvas.oregonstate.edu/courses/1798831/pages/exploration-process-api-monitoring-child-processes?module_item_id=20163874
  *          https://canvas.oregonstate.edu/courses/1798831/pages/exploration-process-api-executing-a-new-program?module_item_id=20163875
  **/
-int executeOtherCommand(char arguments[512][2048], int length, int status) {
+int executeOtherCommand(char arguments[512][2048], int length, int status, char *inputFile, char *outputFile) {
     pid_t spawnPid = -5;
     pid_t childPid;
     char *commandArgs[512] = {NULL};
@@ -234,8 +263,18 @@ int executeOtherCommand(char arguments[512][2048], int length, int status) {
 
     case 0:
         printf("child process\n");
+
+        // for (int i = 0; i < length; i++) {
+        //     if (strcpy(commandArgs[i], "<")) {
+        //         printf("input %s\n", commandArgs[i + 1]);
+        //     } else if (strcpy(commandArgs[i], ">")) {
+        //         printf("output %s\n", commandArgs[i + 1]);
+        //     }
+        // }
+
         if (execvp(commandArgs[0], commandArgs)) {
             printf("%s: no such file or directory\n", arguments[0]);
+            exit(1);
         }
 
         // execlp(arguments[0], arguments[0], arguments[1], NULL);
@@ -246,7 +285,7 @@ int executeOtherCommand(char arguments[512][2048], int length, int status) {
     
     default:
         childPid = waitpid(spawnPid, &status, 0);
-        printf("parent process\n");
+        findStatus(status);
         fflush(stdout);
         break;
     }
