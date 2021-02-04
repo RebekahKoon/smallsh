@@ -1,6 +1,10 @@
 #include "smallsh.h"
 
 
+int childIsForeground = 0;
+int foregroundOnly = 0;
+
+
 /* 
  *
  **/
@@ -45,6 +49,7 @@ void createTokens(char *userInput) {
     char *arguments[512];
     int background = 0;
     int length = 0;
+    int hasArguments = 0;
 
     token = strtok_r(userInput, " ", &currPosition);
 
@@ -57,15 +62,22 @@ void createTokens(char *userInput) {
         } else if (!strcmp(token, ">")) {
             token = strtok_r(NULL, " ", &currPosition);
             outputFile = token;
+        } else if (strstr(token, "$$") != NULL) {
+            arguments[length] = expandVariable(token);
+            length++;
+            hasArguments = 1;
         } else {
             arguments[length] = token;
             length++;
+            hasArguments = 1;
         }
 
         token = strtok_r(NULL, " ", &currPosition);
     }
 
-    readArguments(arguments, length, inputFile, outputFile, background);
+    if (hasArguments) {
+        readArguments(arguments, length, inputFile, outputFile, background);
+    }
 }
 
 
@@ -78,23 +90,17 @@ void readArguments(char *arguments[], int length, char *inputFile, char *outputF
 
     if (strstr(arguments[0], "$$") != NULL) {
         expandedVar = expandVariable(arguments[0]);
-        // builtIn = 1;
         printf("%s\n", expandedVar);
         fflush(stdout);
     } else if (strcmp(arguments[0], "cd") == 0) {
-        // printf("%s %s\n", arguments[i], arguments[i + 1]);
         changeDirectory(arguments[1], length);
-        // builtIn = 1;
     } else if (strcmp(arguments[0], "status") == 0) {
         findStatus(status);
-        // builtIn = 1;
     } else if (strcmp(arguments[0], "exit") == 0) {
-        // builtIn = 1;
         printf("\n");
         fflush(stdout);
     } else {
         status = executeOtherCommand(arguments, length, status, inputFile, outputFile, background);
-        // findStatus(status);
         fflush(stdout);
     }
 }
@@ -249,7 +255,7 @@ int executeOtherCommand(char *arguments[], int length, int status, char *inputFi
         break;
     
     default:
-        if (background == 1) {
+        if (background == 1 && foregroundOnly == 0) {
             childPid = waitpid(spawnPid, &status, WNOHANG);
             printf("background pid is %d\n", spawnPid);
         } else {
@@ -278,8 +284,21 @@ void handle_SIGINT(int signal) {
  * Source: https://canvas.oregonstate.edu/courses/1798831/pages/exploration-signal-handling-api?module_item_id=20163882
  **/
 void handle_SIGTSTP(int signal) {
-	char* message = "Caught SIGTSTP, sleeping for 1 second\n";
-	write(STDOUT_FILENO, message, 39);
-    fflush(stdout);
-	sleep(1);
+	// char* message = "Caught SIGTSTP, sleeping for 1 second\n";
+	// write(STDOUT_FILENO, message, 39);
+    // fflush(stdout);
+	// sleep(1);
+    char *message = NULL;
+
+    if (foregroundOnly == 0) {
+        foregroundOnly = 1;
+        message = "Entering foreground-only mode (& is now ignored)\n";
+        write(STDOUT_FILENO, message, 50);
+        fflush(stdout);
+    } else {
+        foregroundOnly = 0;
+        message = "Exiting foreground-only mode\n";
+        write(STDOUT_FILENO, message, 30);
+        fflush(stdout);
+    }
 }
