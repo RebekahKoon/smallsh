@@ -43,12 +43,15 @@ void createTokens(char *userInput) {
     char *inputFile = NULL;
     char *outputFile = NULL;
     char *arguments[512];
+    int background = 0;
     int length = 0;
 
     token = strtok_r(userInput, " ", &currPosition);
 
     while ((token) != NULL && userInput[0] != '#') {
-        if (!strcmp(token, "<")) {
+        if (!strcmp(token, "&")) {
+            background = 1;
+        } else if (!strcmp(token, "<")) {
             token = strtok_r(NULL, " ", &currPosition);
             inputFile = token;
         } else if (!strcmp(token, ">")) {
@@ -62,16 +65,16 @@ void createTokens(char *userInput) {
         token = strtok_r(NULL, " ", &currPosition);
     }
 
-    readArguments(arguments, length, inputFile, outputFile);
+    readArguments(arguments, length, inputFile, outputFile, background);
 }
 
 
 /*
  *
  **/
-void readArguments(char *arguments[], int length, char *inputFile, char *outputFile) {
+void readArguments(char *arguments[], int length, char *inputFile, char *outputFile, int background) {
     char *expandedVar;
-    int status = 0;
+    static int status = 0;
 
     if (strstr(arguments[0], "$$") != NULL) {
         expandedVar = expandVariable(arguments[0]);
@@ -90,8 +93,8 @@ void readArguments(char *arguments[], int length, char *inputFile, char *outputF
         printf("\n");
         fflush(stdout);
     } else {
-        status = executeOtherCommand(arguments, length, status, inputFile, outputFile);
-        findStatus(status);
+        status = executeOtherCommand(arguments, length, status, inputFile, outputFile, background);
+        // findStatus(status);
         fflush(stdout);
     }
 }
@@ -174,7 +177,7 @@ void findStatus(int status) {
  *          https://canvas.oregonstate.edu/courses/1798831/pages/exploration-process-api-executing-a-new-program?module_item_id=20163875
  *          https://canvas.oregonstate.edu/courses/1798831/pages/exploration-processes-and-i-slash-o?module_item_id=20163883
  **/
-int executeOtherCommand(char *arguments[], int length, int status, char *inputFile, char *outputFile) {
+int executeOtherCommand(char *arguments[], int length, int status, char *inputFile, char *outputFile, int background) {
     pid_t spawnPid = -5;
     pid_t childPid;
     int result;
@@ -246,7 +249,12 @@ int executeOtherCommand(char *arguments[], int length, int status, char *inputFi
         break;
     
     default:
-        childPid = waitpid(spawnPid, &status, 0);
+        if (background == 1) {
+            childPid = waitpid(spawnPid, &status, WNOHANG);
+            printf("background pid is %d\n", spawnPid);
+        } else {
+            childPid = waitpid(spawnPid, &status, 0);
+        }
     }
 
     return status;
