@@ -190,8 +190,8 @@ void readArguments(char *arguments[], int length, char *inputFile, char *outputF
         //     printf("%s %d", arguments[i], length);
         // }
 
-        executeOtherCommand(arguments, length, status, inputFile, outputFile);
-        printf("\n");
+        status = executeOtherCommand(arguments, length, status, inputFile, outputFile);
+        findStatus(status);
         fflush(stdout);
 
         // for (int i = 0; i < length; i++) {
@@ -282,6 +282,7 @@ void changeDirectory(char *path, int numArguments) {
 /*
  *
  * Source: https://canvas.oregonstate.edu/courses/1798831/pages/exploration-process-api-monitoring-child-processes?module_item_id=20163874
+ *         https://stackoverflow.com/questions/3659616/why-does-wait-set-status-to-256-instead-of-the-1-exit-status-of-the-forked-pr
  **/
 void findStatus(int status) {
     if (WIFEXITED(status)) {
@@ -308,6 +309,7 @@ int executeOtherCommand(char *arguments[], int length, int status, char *inputFi
     int targetFD;
     int sourceFD;
     char *commandArgs[length];
+    // int childStatus = 0;
 
     for (int i = 0; i < length; i++) {
         commandArgs[i] = arguments[i];
@@ -336,8 +338,9 @@ int executeOtherCommand(char *arguments[], int length, int status, char *inputFi
         if (inputFile != NULL) {
             sourceFD = open(inputFile, O_RDONLY);
             if (sourceFD == -1) { 
-                perror("source open()");
+                printf("cannot open %s for input\n", inputFile);
                 fflush(stdout); 
+                // childStatus = 1;
                 exit(1); 
             }
 
@@ -346,6 +349,7 @@ int executeOtherCommand(char *arguments[], int length, int status, char *inputFi
             if (result == -1) { 
                 perror("source dup2()");
                 fflush(stdout);
+                // childStatus = 2;
                 exit(2); 
             }
 
@@ -357,8 +361,9 @@ int executeOtherCommand(char *arguments[], int length, int status, char *inputFi
             // Open target file
             targetFD = open(outputFile, O_WRONLY | O_CREAT | O_TRUNC, 0666);
             if (targetFD == -1) { 
-                perror("target open()");
+                printf("cannot open %s for output\n", outputFile);
                 fflush(stdout);
+                // childStatus = 1;
                 exit(1); 
             }
 
@@ -367,7 +372,8 @@ int executeOtherCommand(char *arguments[], int length, int status, char *inputFi
             if (result == -1) { 
                 perror("target dup2()");
                 fflush(stdout);
-                exit(2); 
+                // childStatus = 2;
+                exit(2);
             }
 
             fcntl(targetFD, F_SETFD, FD_CLOEXEC);
@@ -388,21 +394,25 @@ int executeOtherCommand(char *arguments[], int length, int status, char *inputFi
         if (execvp(commandArgs[0], commandArgs)) {
             printf("%s: no such file or directory\n", arguments[0]);
             fflush(stdout);
+            // childStatus = 1;
             exit(1);
         }
 
         // execlp(arguments[0], arguments[0], arguments[1], NULL);
         // perror("execve");
-        exit(1);
         break;
     
     default:
-        fflush(stdout);
+        // fflush(stdout);
         childPid = waitpid(spawnPid, &status, 0);
         // findStatus(status);
-        fflush(stdout);
-        break;
+        // fflush(stdout);
     }
+
+    // if (childStatus != 0) {
+    //     printf("hi");
+    //     status = childStatus;
+    // }
 
     return status;
 }
