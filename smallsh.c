@@ -40,28 +40,14 @@ void userInput() {
 void createTokens(char *userInput) {
     char *token;
     char *currPosition;
-    // char *argument;
     char *inputFile = NULL;
     char *outputFile = NULL;
     char *arguments[512];
     int length = 0;
 
-    // inputFile = malloc(sizeof(char) * 256);
-    // outputFile = malloc(sizeof(char) * 256);
-    // inputFile = NULL;
-    // outputFile = NULL;
     token = strtok_r(userInput, " ", &currPosition);
-    // argument = calloc(strlen(token) + 1, sizeof(char));
-    // strcpy(argument, token);
-
-    // printf("%s\n", token);
-
-    // free(argument);
 
     while ((token) != NULL && userInput[0] != '#') {
-        // argument = calloc(strlen(token) + 1, sizeof(char));
-        // strcpy(argument, token);
-
         if (!strcmp(token, "<")) {
             token = strtok_r(NULL, " ", &currPosition);
             inputFile = token;
@@ -70,46 +56,13 @@ void createTokens(char *userInput) {
             outputFile = token;
         } else {
             arguments[length] = token;
-
-            // if (length > 0 && !strcmp(arguments[length - 1], "<")) {
-            //     strcpy(inputFile, argument);
-            //     printf("%s", inputFile);
-            // } else if (length > 0 && !strcmp(arguments[length - 1], ">")) {
-            //     strcpy(outputFile, argument);
-            //     printf("%s", outputFile);
-            // }
-
-            // free(argument);
             length++;
         }
 
         token = strtok_r(NULL, " ", &currPosition);
     }
 
-    // for (int i = 0; i < length; i++) {
-    //     printf("%s", arguments[i]);
-    // }
-
-    // for (int i = 0; i < length; i++) {
-    //     if (!strcmp(arguments[i], "<")) {
-    //         strcpy(inputFile, arguments[i + 1]);
-    //         printf("%s", inputFile);
-    //     } else if (!strcmp(arguments[i], ">")) {
-    //         strcpy(outputFile, arguments[i + 1]);
-    //         printf("%s", outputFile);
-    //     }
-    // }
-
-    // printf("%s", inputFile);
-    // printf("%s", outputFile);
-
     readArguments(arguments, length, inputFile, outputFile);
-    
-    // free(inputFile);
-    // free(outputFile);
-    // for (int i = 0; i < length; i++) {
-    //     arguments[i] = NULL;
-    // }
 }
 
 
@@ -117,50 +70,8 @@ void createTokens(char *userInput) {
  *
  **/
 void readArguments(char *arguments[], int length, char *inputFile, char *outputFile) {
-    // if (strstr(command, "$$") != NULL) {
-    //     expandVariable(command);
-    // }
-
-    // printf("%d", length);
     char *expandedVar;
     int status = 0;
-    // int builtIn = 0;
-    // char *inputFile = malloc(sizeof(char) * 256);
-    // char *outputFile = malloc(sizeof(char) * 256);
-
-    // strcpy(inputFile, "");
-    // strcpy(outputFile, "");
-
-    // for (int i = 0; i < length; i++) {
-    //     if (!strcmp(arguments[i], "<")) {
-    //         strcpy(inputFile, arguments[i + 1]);
-    //         // printf("%s", inputFile);
-    //     } else if (!strcmp(arguments[i], ">")) {
-    //         strcpy(outputFile, arguments[i + 1]);
-    //         // printf("%s", outputFile);
-    //     }
-    // }
-
-    // for (int i = 0; i < length; i++) {
-    //     if (strstr(arguments[i], "$$") != NULL) {
-    //         expandedVar = expandVariable(arguments[i]);
-    //         builtIn = 1;
-    //         printf("%s\n", expandedVar);
-    //     } else if (strcmp(arguments[i], "cd") == 0) {
-    //         // printf("%s %s\n", arguments[i], arguments[i + 1]);
-    //         changeDirectory(arguments[i + 1], length);
-    //         builtIn = 1;
-    //     } else if (strcmp(arguments[i], "status") == 0) {
-    //         findStatus(status);
-    //         builtIn = 1;
-    //     } else if (strcmp(arguments[i], "exit") == 0) {
-    //         builtIn = 1;
-    //     }
-    // }
-
-    // if (builtIn == 0) {
-    //     executeOtherCommand(arguments, length, status);
-    // }
 
     if (strstr(arguments[0], "$$") != NULL) {
         expandedVar = expandVariable(arguments[0]);
@@ -179,28 +90,10 @@ void readArguments(char *arguments[], int length, char *inputFile, char *outputF
         printf("\n");
         fflush(stdout);
     } else {
-        // char *commandArgs[length];
-
-        // for (int i = 0; i < length; i++) {
-        //     commandArgs[i] = arguments[i];
-        //     // printf("%s hi", arguments[i]);
-        // }
-
-        // for (int i = 0; i < length; i++) {
-        //     printf("%s %d", arguments[i], length);
-        // }
-
         status = executeOtherCommand(arguments, length, status, inputFile, outputFile);
         findStatus(status);
         fflush(stdout);
-
-        // for (int i = 0; i < length; i++) {
-        //     commandArgs[i] = NULL;
-        // }
     }
-
-    // free(inputFile);
-    // free(outputFile);
 }
 
 
@@ -210,31 +103,17 @@ void readArguments(char *arguments[], int length, char *inputFile, char *outputF
 char *expandVariable(char *variable) {
     int length = strlen(variable);
     char *expandedVar = malloc(sizeof(char) * 2048);
-    // char strPointer = 0;
-
-    // for (int i = 0; i < length; i++) {
-    //     if (variable[i] == '$' && i < length - 1 && variable[i + 1] == '$') {
-    //         printf("%d", getpid());
-    //         i++;
-    //     } else {
-    //         printf("%c", variable[i]);
-    //     }
-    // }
 
     for (int i = 0; i < length; i++) {
         if (variable[i] == '$' && i < length - 1 && variable[i + 1] == '$') {
             sprintf(expandedVar, "%s%d", expandedVar, getpid());
             fflush(stdout);
-            // strPointer = strlen(expandedVar) - 1;
             i++;
         } else {
-            // expandedVar[strPointer] = variable[strPointer];
             sprintf(expandedVar, "%s%c", expandedVar, variable[i]);
             fflush(stdout);
         }
     }
-
-    // printf("%s\n", expandedVar);
 
     return expandedVar;
 }
@@ -245,11 +124,6 @@ char *expandVariable(char *variable) {
  * Source: https://stackoverflow.com/questions/298510/how-to-get-the-current-directory-in-a-c-program
  **/
 void changeDirectory(char *path, int numArguments) {
-    // if (path != NULL) {
-    //     printf("Hi\n");
-    // } else {
-    //     printf("%s\n", path);
-    // }
     char *directory;
     char cwd[PATH_MAX];
     char *expandedVar;
@@ -260,7 +134,6 @@ void changeDirectory(char *path, int numArguments) {
         getcwd(cwd, sizeof(cwd));
         printf("%s\n", cwd);
         fflush(stdout);
-        // printf("1\n");
     } else if (strstr(path, "$$") != NULL) {
         expandedVar = expandVariable(path);
         printf("%s\n", expandedVar);
@@ -274,7 +147,6 @@ void changeDirectory(char *path, int numArguments) {
         getcwd(cwd, sizeof(cwd));
         printf("%s\n", cwd);
         fflush(stdout);
-        // printf("2\n");
     }
 }
 
@@ -309,11 +181,9 @@ int executeOtherCommand(char *arguments[], int length, int status, char *inputFi
     int targetFD;
     int sourceFD;
     char *commandArgs[length];
-    // int childStatus = 0;
 
     for (int i = 0; i < length; i++) {
         commandArgs[i] = arguments[i];
-        // printf("%s %s", commandArgs[i], arguments[i]);
     }
 
     spawnPid = fork();
@@ -326,21 +196,12 @@ int executeOtherCommand(char *arguments[], int length, int status, char *inputFi
         break;
 
     case 0:
-        // for (int i = 0; i < length; i++) {
-        //     if (strcpy(commandArgs[i], "<")) {
-        //         printf("input %s\n", commandArgs[i + 1]);
-        //     } else if (strcpy(commandArgs[i], ">")) {
-        //         printf("output %s\n", commandArgs[i + 1]);
-        //     }
-        // }
-
         // If input file argument
         if (inputFile != NULL) {
             sourceFD = open(inputFile, O_RDONLY);
             if (sourceFD == -1) { 
                 printf("cannot open %s for input\n", inputFile);
                 fflush(stdout); 
-                // childStatus = 1;
                 exit(1); 
             }
 
@@ -349,7 +210,6 @@ int executeOtherCommand(char *arguments[], int length, int status, char *inputFi
             if (result == -1) { 
                 perror("source dup2()");
                 fflush(stdout);
-                // childStatus = 2;
                 exit(2); 
             }
 
@@ -363,7 +223,6 @@ int executeOtherCommand(char *arguments[], int length, int status, char *inputFi
             if (targetFD == -1) { 
                 printf("cannot open %s for output\n", outputFile);
                 fflush(stdout);
-                // childStatus = 1;
                 exit(1); 
             }
 
@@ -372,47 +231,23 @@ int executeOtherCommand(char *arguments[], int length, int status, char *inputFi
             if (result == -1) { 
                 perror("target dup2()");
                 fflush(stdout);
-                // childStatus = 2;
                 exit(2);
             }
 
             fcntl(targetFD, F_SETFD, FD_CLOEXEC);
         }
 
-        // if (outputFile == NULL && inputFile == NULL) {
-        //     char *fileCommand[1];
-        //     fileCommand[0] = "ls";
-        //     printf("hi");
-
-        //     if (execvp("ls", fileCommand)) {
-        //         printf("%s: no such file or directory\n", arguments[0]);
-        //         fflush(stdout);
-        //         exit(1);
-        //     }
-        // }
-
         if (execvp(commandArgs[0], commandArgs)) {
             printf("%s: no such file or directory\n", arguments[0]);
             fflush(stdout);
-            // childStatus = 1;
             exit(1);
         }
 
-        // execlp(arguments[0], arguments[0], arguments[1], NULL);
-        // perror("execve");
         break;
     
     default:
-        // fflush(stdout);
         childPid = waitpid(spawnPid, &status, 0);
-        // findStatus(status);
-        // fflush(stdout);
     }
-
-    // if (childStatus != 0) {
-    //     printf("hi");
-    //     status = childStatus;
-    // }
 
     return status;
 }
