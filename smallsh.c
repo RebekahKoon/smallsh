@@ -211,8 +211,7 @@ int executeOtherCommand(char *arguments[], int length, int status, char *inputFi
 
     case 0:
         if (background == 0) {
-            // struct sigaction SIGINT_action = {0};
-            SIGINT_action.sa_handler = handle_SIGINT;
+            SIGINT_action.sa_handler = SIG_DFL;
             sigfillset(&SIGINT_action.sa_mask);
             SIGINT_action.sa_flags = 0;
             sigaction(SIGINT, &SIGINT_action, NULL);
@@ -275,29 +274,19 @@ int executeOtherCommand(char *arguments[], int length, int status, char *inputFi
         } else {
             childPid = waitpid(spawnPid, &status, 0);
             fflush(stdout);
-        }
 
-        if(WIFSIGNALED(status)) {
-            findStatus(status);
+            if(WIFSIGNALED(status)) {
+                findStatus(status);
+            }
         }
+    }
+
+    while ((childPid = waitpid(-1, &status, WNOHANG)) > 0) {
+        printf("background pid %d is done: ", childPid);
+        findStatus(status);
     }
 
     return status;
-}
-
-
-/*
- *
- * Source: https://canvas.oregonstate.edu/courses/1798831/pages/exploration-signal-handling-api?module_item_id=20163882
- **/
-void handle_SIGINT(int signal) {
-    // char *message = NULL;
-    // snprintf(message, "terminated by signal %d\n", WTERMSIG(signal));
-    // write(STDOUT_FILENO, message, 23);
-    // fflush(stdout);
-    if(WIFSIGNALED(signal)) {
-        findStatus(signal);
-    }
 }
 
 

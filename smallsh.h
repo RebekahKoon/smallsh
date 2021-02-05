@@ -18,5 +18,4 @@ char *expandVariable(char *variable);
 void changeDirectory(char *path, int numArguments);
 void findStatus(int status);
 int executeOtherCommand(char *arguments[], int length, int status, char *inputFile, char *outputFile, int background);
-void handle_SIGINT(int signal);
 void handle_SIGTSTP(int signal);
