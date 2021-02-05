@@ -1,29 +1,32 @@
 #include "smallsh.h"
 
 
-int childIsForeground = 0;
+// int childIsForeground = 1;
 int foregroundOnly = 0;
+
+struct sigaction SIGINT_action = {0};
+struct sigaction SIGTSTP_action = {0};
 
 
 /* 
  *
+ * Source: https://canvas.oregonstate.edu/courses/1798831/pages/exploration-signal-handling-api?module_item_id=20163882
  **/
 void userInput() {
     char input[2048] = "";
 
-    struct sigaction SIGINT_action = {0};
-    SIGINT_action.sa_handler = handle_SIGINT;
+    SIGINT_action.sa_handler = SIG_IGN;
     sigfillset(&SIGINT_action.sa_mask);
     SIGINT_action.sa_flags = 0;
     sigaction(SIGINT, &SIGINT_action, NULL);
 
-    struct sigaction SIGTSTP_action = {0};
     SIGTSTP_action.sa_handler = handle_SIGTSTP;
     sigfillset(&SIGTSTP_action.sa_mask);
     SIGTSTP_action.sa_flags = 0;
     sigaction(SIGTSTP, &SIGTSTP_action, NULL);
 
     while (strcmp(input, "exit") != 0) {
+        fflush(stdout);
         printf(": ");
         fgets(input, 256, stdin);
         fflush(stdin);
@@ -56,6 +59,7 @@ void createTokens(char *userInput) {
     while ((token) != NULL && userInput[0] != '#') {
         if (!strcmp(token, "&")) {
             background = 1;
+            // childIsForeground = 0;
         } else if (!strcmp(token, "<")) {
             token = strtok_r(NULL, " ", &currPosition);
             inputFile = token;
@@ -88,11 +92,12 @@ void readArguments(char *arguments[], int length, char *inputFile, char *outputF
     char *expandedVar;
     static int status = 0;
 
-    if (strstr(arguments[0], "$$") != NULL) {
-        expandedVar = expandVariable(arguments[0]);
-        printf("%s\n", expandedVar);
-        fflush(stdout);
-    } else if (strcmp(arguments[0], "cd") == 0) {
+    // if (strstr(arguments[0], "$$") != NULL) {
+    //     expandedVar = expandVariable(arguments[0]);
+    //     printf("%s\n", expandedVar);
+    //     fflush(stdout);
+    // } else 
+    if (strcmp(arguments[0], "cd") == 0) {
         changeDirectory(arguments[1], length);
     } else if (strcmp(arguments[0], "status") == 0) {
         findStatus(status);
@@ -141,21 +146,21 @@ void changeDirectory(char *path, int numArguments) {
         directory = getenv("HOME");
         chdir(directory);
         getcwd(cwd, sizeof(cwd));
-        printf("%s\n", cwd);
-        fflush(stdout);
+        // printf("%s\n", cwd);
+        // fflush(stdout);
     } else if (strstr(path, "$$") != NULL) {
         expandedVar = expandVariable(path);
         printf("%s\n", expandedVar);
         fflush(stdout);
         chdir(path);
         getcwd(cwd, sizeof(cwd));
-        printf("%s\n", cwd);
-        fflush(stdout);
+        // printf("%s\n", cwd);
+        // fflush(stdout);
     } else {
         chdir(path);
         getcwd(cwd, sizeof(cwd));
-        printf("%s\n", cwd);
-        fflush(stdout);
+        // printf("%s\n", cwd);
+        // fflush(stdout);
     }
 }
 
@@ -205,6 +210,14 @@ int executeOtherCommand(char *arguments[], int length, int status, char *inputFi
         break;
 
     case 0:
+        if (background == 0) {
+            // struct sigaction SIGINT_action = {0};
+            SIGINT_action.sa_handler = handle_SIGINT;
+            sigfillset(&SIGINT_action.sa_mask);
+            SIGINT_action.sa_flags = 0;
+            sigaction(SIGINT, &SIGINT_action, NULL);
+        }
+
         // If input file argument
         if (inputFile != NULL) {
             sourceFD = open(inputFile, O_RDONLY);
@@ -258,8 +271,10 @@ int executeOtherCommand(char *arguments[], int length, int status, char *inputFi
         if (background == 1 && foregroundOnly == 0) {
             childPid = waitpid(spawnPid, &status, WNOHANG);
             printf("background pid is %d\n", spawnPid);
+            fflush(stdout);
         } else {
             childPid = waitpid(spawnPid, &status, 0);
+            fflush(stdout);
         }
     }
 
@@ -272,10 +287,8 @@ int executeOtherCommand(char *arguments[], int length, int status, char *inputFi
  * Source: https://canvas.oregonstate.edu/courses/1798831/pages/exploration-signal-handling-api?module_item_id=20163882
  **/
 void handle_SIGINT(int signal) {
-	char* message = "Caught SIGINT, sleeping for 1 second\n";
-	write(STDOUT_FILENO, message, 39);
+    printf("terminated by signal %d\n", WTERMSIG(signal));
     fflush(stdout);
-	sleep(1);
 }
 
 
@@ -284,10 +297,6 @@ void handle_SIGINT(int signal) {
  * Source: https://canvas.oregonstate.edu/courses/1798831/pages/exploration-signal-handling-api?module_item_id=20163882
  **/
 void handle_SIGTSTP(int signal) {
-	// char* message = "Caught SIGTSTP, sleeping for 1 second\n";
-	// write(STDOUT_FILENO, message, 39);
-    // fflush(stdout);
-	// sleep(1);
     char *message = NULL;
 
     if (foregroundOnly == 0) {
