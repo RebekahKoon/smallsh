@@ -276,6 +276,10 @@ int executeOtherCommand(char *arguments[], int length, int status, char *inputFi
             childPid = waitpid(spawnPid, &status, 0);
             fflush(stdout);
         }
+
+        if(WIFSIGNALED(status)) {
+            findStatus(status);
+        }
     }
 
     return status;
@@ -287,8 +291,13 @@ int executeOtherCommand(char *arguments[], int length, int status, char *inputFi
  * Source: https://canvas.oregonstate.edu/courses/1798831/pages/exploration-signal-handling-api?module_item_id=20163882
  **/
 void handle_SIGINT(int signal) {
-    printf("terminated by signal %d\n", WTERMSIG(signal));
-    fflush(stdout);
+    // char *message = NULL;
+    // snprintf(message, "terminated by signal %d\n", WTERMSIG(signal));
+    // write(STDOUT_FILENO, message, 23);
+    // fflush(stdout);
+    if(WIFSIGNALED(signal)) {
+        findStatus(signal);
+    }
 }
 
 
