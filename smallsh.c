@@ -47,32 +47,32 @@ void userInput() {
 void createTokens(char *userInput) {
     char *token;
     char *currPosition;
-    char *inputFile = NULL;
-    char *outputFile = NULL;
-    char *arguments[512];
-    int background = 0;
-    int length = 0;
     int hasArguments = 0;
+
+    struct command *userCommand = malloc(sizeof(struct command));
+    userCommand->numArguments = 0;
+    userCommand->background = 0;
+    userCommand->inputFile = NULL;
+    userCommand->outputFile = NULL;
 
     token = strtok_r(userInput, " ", &currPosition);
 
     while ((token) != NULL && userInput[0] != '#') {
         if (!strcmp(token, "&")) {
-            background = 1;
-            // childIsForeground = 0;
+            userCommand->background = 1;
         } else if (!strcmp(token, "<")) {
             token = strtok_r(NULL, " ", &currPosition);
-            inputFile = token;
+            userCommand->inputFile = token;
         } else if (!strcmp(token, ">")) {
             token = strtok_r(NULL, " ", &currPosition);
-            outputFile = token;
+            userCommand->outputFile = token;
         } else if (strstr(token, "$$") != NULL) {
-            arguments[length] = expandVariable(token);
-            length++;
+            userCommand->arguments[userCommand->numArguments] = expandVariable(token);
+            userCommand->numArguments++;
             hasArguments = 1;
         } else {
-            arguments[length] = token;
-            length++;
+            userCommand->arguments[userCommand->numArguments] = token;
+            userCommand->numArguments++;
             hasArguments = 1;
         }
 
@@ -80,32 +80,28 @@ void createTokens(char *userInput) {
     }
 
     if (hasArguments) {
-        readArguments(arguments, length, inputFile, outputFile, background);
+        readArguments(userCommand);
     }
+
+    free(userCommand);
 }
 
 
 /*
  *
  **/
-void readArguments(char *arguments[], int length, char *inputFile, char *outputFile, int background) {
-    char *expandedVar;
+void readArguments(struct command *userCommand) {
     static int status = 0;
 
-    // if (strstr(arguments[0], "$$") != NULL) {
-    //     expandedVar = expandVariable(arguments[0]);
-    //     printf("%s\n", expandedVar);
-    //     fflush(stdout);
-    // } else 
-    if (strcmp(arguments[0], "cd") == 0) {
-        changeDirectory(arguments[1], length);
-    } else if (strcmp(arguments[0], "status") == 0) {
+    if (strcmp(userCommand->arguments[0], "cd") == 0) {
+        changeDirectory(userCommand->arguments[1], userCommand->numArguments);
+    } else if (strcmp(userCommand->arguments[0], "status") == 0) {
         findStatus(status);
-    } else if (strcmp(arguments[0], "exit") == 0) {
+    } else if (strcmp(userCommand->arguments[0], "exit") == 0) {
         printf("\n");
         fflush(stdout);
     } else {
-        status = executeOtherCommand(arguments, length, status, inputFile, outputFile, background);
+        status = executeOtherCommand(userCommand, status);
         fflush(stdout);
     }
 }
@@ -130,6 +126,8 @@ char *expandVariable(char *variable) {
     }
 
     return expandedVar;
+
+    free(expandedVar);
 }
 
 
@@ -146,21 +144,15 @@ void changeDirectory(char *path, int numArguments) {
         directory = getenv("HOME");
         chdir(directory);
         getcwd(cwd, sizeof(cwd));
-        // printf("%s\n", cwd);
-        // fflush(stdout);
     } else if (strstr(path, "$$") != NULL) {
         expandedVar = expandVariable(path);
         printf("%s\n", expandedVar);
         fflush(stdout);
         chdir(path);
         getcwd(cwd, sizeof(cwd));
-        // printf("%s\n", cwd);
-        // fflush(stdout);
     } else {
         chdir(path);
         getcwd(cwd, sizeof(cwd));
-        // printf("%s\n", cwd);
-        // fflush(stdout);
     }
 }
 
@@ -188,16 +180,16 @@ void findStatus(int status) {
  *          https://canvas.oregonstate.edu/courses/1798831/pages/exploration-process-api-executing-a-new-program?module_item_id=20163875
  *          https://canvas.oregonstate.edu/courses/1798831/pages/exploration-processes-and-i-slash-o?module_item_id=20163883
  **/
-int executeOtherCommand(char *arguments[], int length, int status, char *inputFile, char *outputFile, int background) {
+int executeOtherCommand(struct command *userCommand, int status) {
     pid_t spawnPid = -5;
     pid_t childPid;
     int result;
     int targetFD;
     int sourceFD;
-    char *commandArgs[length];
+    char *commandArgs[userCommand->numArguments];
 
-    for (int i = 0; i < length; i++) {
-        commandArgs[i] = arguments[i];
+    for (int i = 0; i < userCommand->numArguments; i++) {
+        commandArgs[i] = userCommand->arguments[i];
     }
 
     spawnPid = fork();
@@ -210,7 +202,7 @@ int executeOtherCommand(char *arguments[], int length, int status, char *inputFi
         break;
 
     case 0:
-        if (background == 0) {
+        if (userCommand->background == 0) {
             SIGINT_action.sa_handler = SIG_DFL;
             sigfillset(&SIGINT_action.sa_mask);
             SIGINT_action.sa_flags = 0;
@@ -218,10 +210,10 @@ int executeOtherCommand(char *arguments[], int length, int status, char *inputFi
         }
 
         // If input file argument
-        if (inputFile != NULL) {
-            sourceFD = open(inputFile, O_RDONLY);
+        if (userCommand->inputFile != NULL) {
+            sourceFD = open(userCommand->inputFile, O_RDONLY);
             if (sourceFD == -1) { 
-                printf("cannot open %s for input\n", inputFile);
+                printf("cannot open %s for input\n", userCommand->inputFile);
                 fflush(stdout); 
                 exit(1); 
             }
@@ -238,11 +230,11 @@ int executeOtherCommand(char *arguments[], int length, int status, char *inputFi
         }
 
         // If output file argument
-        if (outputFile != NULL) {
+        if (userCommand->outputFile != NULL) {
             // Open target file
-            targetFD = open(outputFile, O_WRONLY | O_CREAT | O_TRUNC, 0666);
+            targetFD = open(userCommand->outputFile, O_WRONLY | O_CREAT | O_TRUNC, 0666);
             if (targetFD == -1) { 
-                printf("cannot open %s for output\n", outputFile);
+                printf("cannot open %s for output\n", userCommand->outputFile);
                 fflush(stdout);
                 exit(1); 
             }
@@ -259,7 +251,7 @@ int executeOtherCommand(char *arguments[], int length, int status, char *inputFi
         }
 
         if (execvp(commandArgs[0], commandArgs)) {
-            printf("%s: no such file or directory\n", arguments[0]);
+            printf("%s: no such file or directory\n", userCommand->arguments[0]);
             fflush(stdout);
             exit(1);
         }
@@ -267,7 +259,7 @@ int executeOtherCommand(char *arguments[], int length, int status, char *inputFi
         break;
     
     default:
-        if (background == 1 && foregroundOnly == 0) {
+        if (userCommand->background == 1 && foregroundOnly == 0) {
             childPid = waitpid(spawnPid, &status, WNOHANG);
             printf("background pid is %d\n", spawnPid);
             fflush(stdout);

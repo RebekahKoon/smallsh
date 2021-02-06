@@ -11,11 +11,20 @@
 #include <signal.h>
 
 
+struct command {
+    char *arguments[512];
+    char *inputFile;
+    char *outputFile;
+    int background;
+    int numArguments;
+};
+
+
 void userInput();
 void createTokens(char *userInput);
-void readArguments(char *arguments[], int length, char *inputFile, char *outputFile, int background);
+void readArguments(struct command *userCommand);
 char *expandVariable(char *variable);
 void changeDirectory(char *path, int numArguments);
 void findStatus(int status);
-int executeOtherCommand(char *arguments[], int length, int status, char *inputFile, char *outputFile, int background);
+int executeOtherCommand(struct command *userCommand, int status);
 void handle_SIGTSTP(int signal);
