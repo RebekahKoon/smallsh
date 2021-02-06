@@ -4,8 +4,8 @@
 // int childIsForeground = 1;
 int foregroundOnly = 0;
 
-struct sigaction SIGINT_action = {0};
-struct sigaction SIGTSTP_action = {0};
+struct sigaction SIGINT_action = {{0}};
+struct sigaction SIGTSTP_action = {{0}};
 
 
 /* 
@@ -230,7 +230,6 @@ void findStatus(int status) {
  * Sources: https://canvas.oregonstate.edu/courses/1798831/pages/exploration-process-api-creating-and-terminating-processes?module_item_id=20163873
  *          https://canvas.oregonstate.edu/courses/1798831/pages/exploration-process-api-monitoring-child-processes?module_item_id=20163874
  *          https://canvas.oregonstate.edu/courses/1798831/pages/exploration-process-api-executing-a-new-program?module_item_id=20163875
- *          https://canvas.oregonstate.edu/courses/1798831/pages/exploration-processes-and-i-slash-o?module_item_id=20163883
  **/
 int executeOtherCommand(struct command *userCommand, int status) {
     pid_t spawnPid = -5;
@@ -334,7 +333,9 @@ void handle_SIGTSTP(int signal) {
 
 
 /* 
- *
+ * Redirects input to the desired file if the file is found.
+ * 
+ * Source: https://canvas.oregonstate.edu/courses/1798831/pages/exploration-processes-and-i-slash-o?module_item_id=20163883
  **/
 void redirect_input(char *inputFile) {
     int sourceFD;
@@ -361,6 +362,11 @@ void redirect_input(char *inputFile) {
 }
 
 
+/* 
+ * Redirects output to the desired file if the file is found.
+ * 
+ * Source: https://canvas.oregonstate.edu/courses/1798831/pages/exploration-processes-and-i-slash-o?module_item_id=20163883
+ **/
 void redirect_output(char *outputFile) {
     int targetFD;
     int result;
