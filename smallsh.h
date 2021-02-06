@@ -11,6 +11,7 @@
 #include <signal.h>
 
 
+// Struct for an inputted command
 struct command {
     char *arguments[512];
     char *inputFile;
