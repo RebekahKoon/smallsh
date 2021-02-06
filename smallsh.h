@@ -29,3 +29,5 @@ void changeDirectory(char *path, int numArguments);
 void findStatus(int status);
 int executeOtherCommand(struct command *userCommand, int status);
 void handle_SIGTSTP(int signal);
+void redirect_input(char *inputFile);
+void redirect_output(char *outputFile);

@@ -235,9 +235,6 @@ void findStatus(int status) {
 int executeOtherCommand(struct command *userCommand, int status) {
     pid_t spawnPid = -5;
     pid_t childPid;
-    int result;
-    int targetFD;
-    int sourceFD;
     char *commandArgs[userCommand->numArguments];
 
     // Put commands in another array that has length of number of arguments
@@ -267,47 +264,12 @@ int executeOtherCommand(struct command *userCommand, int status) {
 
         // If input file argument
         if (userCommand->inputFile != NULL) {
-            sourceFD = open(userCommand->inputFile, O_RDONLY);
-            // Can't open file
-            if (sourceFD == -1) { 
-                printf("cannot open %s for input\n", userCommand->inputFile);
-                fflush(stdout); 
-                exit(1); 
-            }
-
-            result = dup2(sourceFD, 0);
-            // Failed redirect
-            if (result == -1) { 
-                perror("source dup2()");
-                fflush(stdout);
-                exit(2); 
-            }
-
-            // Closing file
-            fcntl(sourceFD, F_SETFD, FD_CLOEXEC);
+            redirect_input(userCommand->inputFile);
         }
 
         // If output file argument
         if (userCommand->outputFile != NULL) {
-            // Open target file
-            targetFD = open(userCommand->outputFile, O_WRONLY | O_CREAT | O_TRUNC, 0666);
-            // Can't open file
-            if (targetFD == -1) { 
-                printf("cannot open %s for output\n", userCommand->outputFile);
-                fflush(stdout);
-                exit(1); 
-            }
-
-            result = dup2(targetFD, 1);
-            // Failed redirect
-            if (result == -1) { 
-                perror("target dup2()");
-                fflush(stdout);
-                exit(2);
-            }
-
-            // Closing file
-            fcntl(targetFD, F_SETFD, FD_CLOEXEC);
+            redirect_output(userCommand->outputFile);
         }
 
         // Executes command if valid
@@ -368,4 +330,58 @@ void handle_SIGTSTP(int signal) {
         write(STDOUT_FILENO, message, 30);
         fflush(stdout);
     }
+}
+
+
+/* 
+ *
+ **/
+void redirect_input(char *inputFile) {
+    int sourceFD;
+    int result;
+
+    sourceFD = open(inputFile, O_RDONLY);
+    // Can't open file
+    if (sourceFD == -1) { 
+        printf("cannot open %s for input\n", inputFile);
+        fflush(stdout); 
+        exit(1); 
+    }
+
+    result = dup2(sourceFD, 0);
+    // Failed redirect
+    if (result == -1) { 
+        perror("source dup2()");
+        fflush(stdout);
+        exit(2); 
+    }
+
+    // Closing file
+    fcntl(sourceFD, F_SETFD, FD_CLOEXEC);
+}
+
+
+void redirect_output(char *outputFile) {
+    int targetFD;
+    int result;
+
+    // Open target file
+    targetFD = open(outputFile, O_WRONLY | O_CREAT | O_TRUNC, 0666);
+    // Can't open file
+    if (targetFD == -1) { 
+        printf("cannot open %s for output\n", outputFile);
+        fflush(stdout);
+        exit(1); 
+    }
+
+    result = dup2(targetFD, 1);
+    // Failed redirect
+    if (result == -1) { 
+        perror("target dup2()");
+        fflush(stdout);
+        exit(2);
+    }
+
+    // Closing file
+    fcntl(targetFD, F_SETFD, FD_CLOEXEC);   
 }
