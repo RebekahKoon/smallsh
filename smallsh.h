@@ -13,7 +13,7 @@
 
 // Struct for an inputted command
 struct command {
-    char *arguments[512];
+    char *arguments[513];
     char *inputFile;
     char *outputFile;
     int background;

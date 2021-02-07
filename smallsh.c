@@ -14,7 +14,7 @@ struct sigaction SIGTSTP_action = {{0}};
  * Source: https://canvas.oregonstate.edu/courses/1798831/pages/exploration-signal-handling-api?module_item_id=20163882
  **/
 void userInput() {
-    char input[2048] = "";
+    char input[2049] = "";
 
     // Ignoring ctrl-c
     SIGINT_action.sa_handler = SIG_IGN;
@@ -32,7 +32,7 @@ void userInput() {
     while (strcmp(input, "exit") != 0) {
         fflush(stdout);
         printf(": ");
-        fgets(input, 256, stdin);
+        fgets(input, 2049, stdin);
         fflush(stdin);
         fflush(stdout);
 
