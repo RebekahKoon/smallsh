@@ -44,6 +44,8 @@ void userInput() {
         // Creating tokens based on user input
         createTokens(input);
     }
+
+    terminateProcesses();
 }
 
 
@@ -263,12 +265,12 @@ int executeOtherCommand(struct command *userCommand, int status) {
 
         // If input file argument
         if (userCommand->inputFile != NULL) {
-            redirect_input(userCommand->inputFile);
+            redirectInput(userCommand->inputFile);
         }
 
         // If output file argument
         if (userCommand->outputFile != NULL) {
-            redirect_output(userCommand->outputFile);
+            redirectOutput(userCommand->outputFile);
         }
 
         // Executes command if valid
@@ -337,7 +339,7 @@ void handle_SIGTSTP(int signal) {
  * 
  * Source: https://canvas.oregonstate.edu/courses/1798831/pages/exploration-processes-and-i-slash-o?module_item_id=20163883
  **/
-void redirect_input(char *inputFile) {
+void redirectInput(char *inputFile) {
     int sourceFD;
     int result;
 
@@ -367,7 +369,7 @@ void redirect_input(char *inputFile) {
  * 
  * Source: https://canvas.oregonstate.edu/courses/1798831/pages/exploration-processes-and-i-slash-o?module_item_id=20163883
  **/
-void redirect_output(char *outputFile) {
+void redirectOutput(char *outputFile) {
     int targetFD;
     int result;
 
@@ -390,4 +392,17 @@ void redirect_output(char *outputFile) {
 
     // Closing file
     fcntl(targetFD, F_SETFD, FD_CLOEXEC);   
+}
+
+
+/* 
+ * Kills all currently running processes.
+ * 
+ * Sources: https://stackoverflow.com/questions/14558068/c-kill-all-processes
+ **/
+void terminateProcesses() {
+    // Killing processes
+    printf("Killing any running processes...\n");
+    fflush(stdout);
+    kill(0, SIGKILL);
 }
