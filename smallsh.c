@@ -66,6 +66,7 @@ void userInput() {
 struct command *createTokens(char *userInput) {
     char *token;
     char *currPosition;
+    char *tempPosition;
 
     // Initializing struct that will store the user's command
     struct command *userCommand = malloc(sizeof(struct command));
@@ -78,7 +79,7 @@ struct command *createTokens(char *userInput) {
 
     // Finding each argument of the command if line is not a comment
     while ((token) != NULL && userInput[0] != '#') {
-        if (!strcmp(token, "&")) {
+        if (!strcmp(token, "&") && ((token = strtok_r(NULL, " ", &tempPosition)) == NULL)) {
             // Process will run in the background
             userCommand->background = 1;
         } else if (!strcmp(token, "<")) {
@@ -99,6 +100,7 @@ struct command *createTokens(char *userInput) {
         }
 
         token = strtok_r(NULL, " ", &currPosition);
+        tempPosition = currPosition;
     }
 
     return userCommand;
