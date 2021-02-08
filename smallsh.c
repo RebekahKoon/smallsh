@@ -89,13 +89,13 @@ struct command *createTokens(char *userInput) {
 void readArguments(struct command *userCommand) {
     static int status = 0;
 
-    if (strcmp(userCommand->arguments[0], "cd") == 0) {
+    if (strcmp(userCommand->arguments[0], CD) == 0) {
         // Change to another directory
         changeDirectory(userCommand->arguments[1], userCommand->numArguments);
-    } else if (strcmp(userCommand->arguments[0], "status") == 0) {
+    } else if (strcmp(userCommand->arguments[0], STATUS) == 0) {
         // Finding status of the last non-built-in foreground process
         findStatus(status);
-    } else if (strcmp(userCommand->arguments[0], "exit") == 0) {
+    } else if (strcmp(userCommand->arguments[0], EXIT) == 0) {
         // Program will exit
         printf("\n");
         fflush(stdout);

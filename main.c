@@ -18,7 +18,7 @@ int main() {
     input = userInput(input);
 
     // Loops until user exits
-    while (strcmp(input, "exit") != 0) {
+    while (strcmp(input, EXIT) != 0) {
         // Creating tokens based on user input
         userCommand = createTokens(input);
 

@@ -14,6 +14,12 @@
 #include <signal.h>
 
 
+// Constant values
+#define CD "cd"
+#define STATUS "status"
+#define EXIT "exit"
+
+
 // Struct for an inputted command
 struct command {
     char *arguments[513];
@@ -37,5 +43,6 @@ void redirectOutput(char *outputFile);
 void terminateProcesses();
 void ignore_SIGINT();
 void redefine_SIGTSTP();
+
 
 #endif
