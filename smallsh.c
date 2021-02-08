@@ -15,6 +15,7 @@ struct sigaction SIGTSTP_action = {{0}};
  **/
 void userInput() {
     char input[2049] = "";
+    struct command *userCommand;
 
     // Ignoring ctrl-c
     SIGINT_action.sa_handler = SIG_IGN;
@@ -42,7 +43,14 @@ void userInput() {
         }
 
         // Creating tokens based on user input
-        createTokens(input);
+        userCommand = createTokens(input);
+
+        // Reading command if any arguments
+        if (userCommand->numArguments != 0) {
+            readArguments(userCommand);
+        }
+
+        free(userCommand);
     }
 
     terminateProcesses();
@@ -55,10 +63,9 @@ void userInput() {
  * 
  * @params char *userInput: input of command from the user
  **/
-void createTokens(char *userInput) {
+struct command *createTokens(char *userInput) {
     char *token;
     char *currPosition;
-    int hasArguments = 0;
 
     // Initializing struct that will store the user's command
     struct command *userCommand = malloc(sizeof(struct command));
@@ -86,22 +93,15 @@ void createTokens(char *userInput) {
             // Variable needs to be expanded
             userCommand->arguments[userCommand->numArguments] = expandVariable(token);
             userCommand->numArguments++;
-            hasArguments = 1;
         } else {
             userCommand->arguments[userCommand->numArguments] = token;
             userCommand->numArguments++;
-            hasArguments = 1;
         }
 
         token = strtok_r(NULL, " ", &currPosition);
     }
 
-    // Reading arguments part of the command
-    if (hasArguments) {
-        readArguments(userCommand);
-    }
-
-    free(userCommand);
+    return userCommand;
 }
 
 

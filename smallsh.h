@@ -22,7 +22,7 @@ struct command {
 
 
 void userInput();
-void createTokens(char *userInput);
+struct command *createTokens(char *userInput);
 void readArguments(struct command *userCommand);
 char *expandVariable(char *variable);
 void changeDirectory(char *path, int numArguments);
