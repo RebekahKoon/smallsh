@@ -12,6 +12,9 @@ int main() {
     char *input = malloc(sizeof(char) * 2049);
     struct command *userCommand;
 
+    ignore_SIGINT();
+    redefine_SIGTSTP();
+
     input = userInput(input);
 
     // Loops until user exits

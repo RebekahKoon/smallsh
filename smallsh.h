@@ -1,3 +1,6 @@
+#ifndef SMALLSH_H
+#define SMALLSH_H
+
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -32,3 +35,7 @@ void handle_SIGTSTP(int signal);
 void redirectInput(char *inputFile);
 void redirectOutput(char *outputFile);
 void terminateProcesses();
+void ignore_SIGINT();
+void redefine_SIGTSTP();
+
+#endif

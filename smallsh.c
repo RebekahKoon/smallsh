@@ -8,15 +8,8 @@ struct sigaction SIGTSTP_action = {{0}};
 
 /* 
  * Asks for user input. Additionally turns off the default actions of ctrl-c and ctrl-z.
- * 
- * Source: https://canvas.oregonstate.edu/courses/1798831/pages/exploration-signal-handling-api?module_item_id=20163882
  **/
 char *userInput(char *input) {
-    // char *input = malloc(sizeof(char) * 2049);
-    // struct command *userCommand;
-
-    // Loops for user input until user enters "exit"
-    // while (strcmp(input, "exit") != 0) {
     fflush(stdout);
     printf(": ");
     fgets(input, 2049, stdin);
@@ -27,19 +20,6 @@ char *userInput(char *input) {
     if (strlen(input) > 0 && (input[strlen(input) - 1] == '\n')) {
         input[strlen(input) - 1] = '\0';
     }
-
-    // // Creating tokens based on user input
-    // userCommand = createTokens(input);
-
-    // // Reading command if any arguments
-    // if (userCommand->numArguments != 0) {
-    //     readArguments(userCommand);
-    // }
-
-    // free(userCommand);
-    // }
-
-    // terminateProcesses();
 
     return input;
 }
@@ -68,8 +48,10 @@ struct command *createTokens(char *userInput) {
     // Finding each argument of the command if line is not a comment
     while ((token) != NULL && userInput[0] != '#') {
         if (!strcmp(token, "&") && ((token = strtok_r(NULL, " ", &tempPosition)) == NULL)) {
-            // Process will run in the background
-            userCommand->background = 1;
+            if (foregroundOnly == 0) {
+                // Process will run in the background
+                userCommand->background = 1;
+            }
         } else if (!strcmp(token, "<")) {
             // Redirection to an input file exists
             token = strtok_r(NULL, " ", &currPosition);
@@ -105,18 +87,6 @@ struct command *createTokens(char *userInput) {
  *         command information
  **/
 void readArguments(struct command *userCommand) {
-    // Ignoring ctrl-c
-    SIGINT_action.sa_handler = SIG_IGN;
-    sigfillset(&SIGINT_action.sa_mask);
-    SIGINT_action.sa_flags = 0;
-    sigaction(SIGINT, &SIGINT_action, NULL);
-
-    // Handling ctrl-z
-    SIGTSTP_action.sa_handler = handle_SIGTSTP;
-    sigfillset(&SIGTSTP_action.sa_mask);
-    SIGTSTP_action.sa_flags = 0;
-    sigaction(SIGTSTP, &SIGTSTP_action, NULL);
-
     static int status = 0;
 
     if (strcmp(userCommand->arguments[0], "cd") == 0) {
@@ -421,4 +391,32 @@ void terminateProcesses() {
     printf("Killing any running processes...\n");
     fflush(stdout);
     kill(0, SIGKILL);
+}
+
+
+/*
+ * Ignores when user inputs ctrl-c.
+ * 
+ * Source: https://canvas.oregonstate.edu/courses/1798831/pages/exploration-signal-handling-api?module_item_id=20163882
+ **/
+void ignore_SIGINT() {
+    // Ignoring ctrl-c
+    SIGINT_action.sa_handler = SIG_IGN;
+    sigfillset(&SIGINT_action.sa_mask);
+    SIGINT_action.sa_flags = 0;
+    sigaction(SIGINT, &SIGINT_action, NULL);
+}
+
+
+/*
+ * Ignores when user inputs ctrl-z.
+ * 
+ * Source: https://canvas.oregonstate.edu/courses/1798831/pages/exploration-signal-handling-api?module_item_id=20163882
+ **/
+void redefine_SIGTSTP() {
+    // Handling ctrl-z
+    SIGTSTP_action.sa_handler = handle_SIGTSTP;
+    sigfillset(&SIGTSTP_action.sa_mask);
+    SIGTSTP_action.sa_flags = 0;
+    sigaction(SIGTSTP, &SIGTSTP_action, NULL);
 }
