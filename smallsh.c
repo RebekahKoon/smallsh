@@ -263,6 +263,20 @@ int executeOtherCommand(struct command *userCommand, int status) {
             sigaction(SIGINT, &SIGINT_action, NULL);
         }
 
+        if (userCommand->background == 1) {
+            // If input redirection not specified
+            if (userCommand->inputFile == NULL) {
+                userCommand->inputFile = "/dev/null";
+                redirectInput(userCommand->inputFile);
+            }
+
+            // If output redirection not specified
+            if (userCommand->outputFile == NULL) {
+                userCommand->outputFile = "/dev/null";
+                redirectOutput(userCommand->outputFile);
+            }
+        }
+
         // If input file argument
         if (userCommand->inputFile != NULL) {
             redirectInput(userCommand->inputFile);
