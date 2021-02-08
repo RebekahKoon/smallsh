@@ -1,7 +1,5 @@
 #include "smallsh.h"
 
-
-// int childIsForeground = 1;
 int foregroundOnly = 0;
 
 struct sigaction SIGINT_action = {{0}};
@@ -13,47 +11,37 @@ struct sigaction SIGTSTP_action = {{0}};
  * 
  * Source: https://canvas.oregonstate.edu/courses/1798831/pages/exploration-signal-handling-api?module_item_id=20163882
  **/
-void userInput() {
-    char input[2049] = "";
-    struct command *userCommand;
-
-    // Ignoring ctrl-c
-    SIGINT_action.sa_handler = SIG_IGN;
-    sigfillset(&SIGINT_action.sa_mask);
-    SIGINT_action.sa_flags = 0;
-    sigaction(SIGINT, &SIGINT_action, NULL);
-
-    // Handling ctrl-z
-    SIGTSTP_action.sa_handler = handle_SIGTSTP;
-    sigfillset(&SIGTSTP_action.sa_mask);
-    SIGTSTP_action.sa_flags = 0;
-    sigaction(SIGTSTP, &SIGTSTP_action, NULL);
+char *userInput(char *input) {
+    // char *input = malloc(sizeof(char) * 2049);
+    // struct command *userCommand;
 
     // Loops for user input until user enters "exit"
-    while (strcmp(input, "exit") != 0) {
-        fflush(stdout);
-        printf(": ");
-        fgets(input, 2049, stdin);
-        fflush(stdin);
-        fflush(stdout);
+    // while (strcmp(input, "exit") != 0) {
+    fflush(stdout);
+    printf(": ");
+    fgets(input, 2049, stdin);
+    fflush(stdin);
+    fflush(stdout);
 
-        // If newline is in the input, removes it
-        if (strlen(input) > 0 && (input[strlen(input) - 1] == '\n')) {
-            input[strlen(input) - 1] = '\0';
-        }
-
-        // Creating tokens based on user input
-        userCommand = createTokens(input);
-
-        // Reading command if any arguments
-        if (userCommand->numArguments != 0) {
-            readArguments(userCommand);
-        }
-
-        free(userCommand);
+    // If newline is in the input, removes it
+    if (strlen(input) > 0 && (input[strlen(input) - 1] == '\n')) {
+        input[strlen(input) - 1] = '\0';
     }
 
-    terminateProcesses();
+    // // Creating tokens based on user input
+    // userCommand = createTokens(input);
+
+    // // Reading command if any arguments
+    // if (userCommand->numArguments != 0) {
+    //     readArguments(userCommand);
+    // }
+
+    // free(userCommand);
+    // }
+
+    // terminateProcesses();
+
+    return input;
 }
 
 
@@ -117,6 +105,18 @@ struct command *createTokens(char *userInput) {
  *         command information
  **/
 void readArguments(struct command *userCommand) {
+    // Ignoring ctrl-c
+    SIGINT_action.sa_handler = SIG_IGN;
+    sigfillset(&SIGINT_action.sa_mask);
+    SIGINT_action.sa_flags = 0;
+    sigaction(SIGINT, &SIGINT_action, NULL);
+
+    // Handling ctrl-z
+    SIGTSTP_action.sa_handler = handle_SIGTSTP;
+    sigfillset(&SIGTSTP_action.sa_mask);
+    SIGTSTP_action.sa_flags = 0;
+    sigaction(SIGTSTP, &SIGTSTP_action, NULL);
+
     static int status = 0;
 
     if (strcmp(userCommand->arguments[0], "cd") == 0) {

@@ -21,7 +21,7 @@ struct command {
 };
 
 
-void userInput();
+char *userInput(char *input);
 struct command *createTokens(char *userInput);
 void readArguments(struct command *userCommand);
 char *expandVariable(char *variable);
