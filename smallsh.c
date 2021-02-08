@@ -42,6 +42,9 @@ struct command *createTokens(char *userInput) {
     userCommand->background = 0;
     userCommand->inputFile = NULL;
     userCommand->outputFile = NULL;
+    for (int i = 0; i < 513; i++) {
+        userCommand->arguments[i] = NULL;
+    }
 
     token = strtok_r(userInput, " ", &currPosition);
 
@@ -208,12 +211,6 @@ void findStatus(int status) {
 int executeOtherCommand(struct command *userCommand, int status) {
     pid_t spawnPid = -5;
     pid_t childPid;
-    char *commandArgs[userCommand->numArguments];
-
-    // Put commands in another array that has length of number of arguments
-    for (int i = 0; i < userCommand->numArguments; i++) {
-        commandArgs[i] = userCommand->arguments[i];
-    }
 
     spawnPid = fork();
     switch (spawnPid)
@@ -260,7 +257,7 @@ int executeOtherCommand(struct command *userCommand, int status) {
         }
 
         // Executes command if valid
-        if (execvp(commandArgs[0], commandArgs)) {
+        if (execvp(userCommand->arguments[0], userCommand->arguments)) {
             printf("%s: no such file or directory\n", userCommand->arguments[0]);
             fflush(stdout);
             exit(1);
@@ -388,7 +385,7 @@ void redirectOutput(char *outputFile) {
  **/
 void terminateProcesses() {
     // Killing processes
-    printf("Killing any running processes...\n");
+    printf("\nKilling any running processes...\n");
     fflush(stdout);
     kill(0, SIGKILL);
 }
