@@ -42,6 +42,8 @@ void redirectInput(char *inputFile);
 void redirectOutput(char *outputFile);
 void terminateProcesses();
 void ignore_SIGINT();
+void ignore_SIGTSTP();
+void allow_SIGINT();
 void redefine_SIGTSTP();
 
 

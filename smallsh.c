@@ -224,12 +224,11 @@ int executeOtherCommand(struct command *userCommand, int status) {
 
     // Child process
     case 0:
+        ignore_SIGTSTP();
+
         // ctrl-c can cancel foreground process
         if (userCommand->background == 0) {
-            SIGINT_action.sa_handler = SIG_DFL;
-            sigfillset(&SIGINT_action.sa_mask);
-            SIGINT_action.sa_flags = 0;
-            sigaction(SIGINT, &SIGINT_action, NULL);
+            allow_SIGINT();
         }
 
         if (userCommand->background == 1) {
@@ -290,30 +289,6 @@ int executeOtherCommand(struct command *userCommand, int status) {
     }
 
     return status;
-}
-
-
-/*
- * If ctrl-z is inputted, changes to foreground-only mode. If ctrl-z
- * is inputted again, exits foreground-only mode.
- * 
- * @params int signal: signal of the inputted ctrl-z
- * Source: https://canvas.oregonstate.edu/courses/1798831/pages/exploration-signal-handling-api?module_item_id=20163882
- **/
-void handle_SIGTSTP(int signal) {
-    char *message = NULL;
-
-    if (foregroundOnly == 0) {
-        foregroundOnly = 1;
-        message = "Entering foreground-only mode (& is now ignored)\n";
-        write(STDOUT_FILENO, message, 50);
-        fflush(stdout);
-    } else {
-        foregroundOnly = 0;
-        message = "Exiting foreground-only mode\n";
-        write(STDOUT_FILENO, message, 30);
-        fflush(stdout);
-    }
 }
 
 
@@ -410,10 +385,59 @@ void ignore_SIGINT() {
  * 
  * Source: https://canvas.oregonstate.edu/courses/1798831/pages/exploration-signal-handling-api?module_item_id=20163882
  **/
+void ignore_SIGTSTP() {
+    // Ignoring ctrl-c
+    SIGTSTP_action.sa_handler = SIG_IGN;
+    sigfillset(&SIGTSTP_action.sa_mask);
+    SIGTSTP_action.sa_flags = 0;
+    sigaction(SIGTSTP, &SIGTSTP_action, NULL);
+}
+
+
+/*
+ * Ignores when user inputs ctrl-z.
+ * 
+ * Source: https://canvas.oregonstate.edu/courses/1798831/pages/exploration-signal-handling-api?module_item_id=20163882
+ **/
 void redefine_SIGTSTP() {
     // Handling ctrl-z
     SIGTSTP_action.sa_handler = handle_SIGTSTP;
     sigfillset(&SIGTSTP_action.sa_mask);
-    SIGTSTP_action.sa_flags = 0;
+    SIGTSTP_action.sa_flags = SA_RESTART;
     sigaction(SIGTSTP, &SIGTSTP_action, NULL);
+}
+
+
+/*
+ * 
+ */
+void allow_SIGINT() {
+    SIGINT_action.sa_handler = SIG_DFL;
+    sigfillset(&SIGINT_action.sa_mask);
+    SIGINT_action.sa_flags = 0;
+    sigaction(SIGINT, &SIGINT_action, NULL);
+}
+
+
+/*
+ * If ctrl-z is inputted, changes to foreground-only mode. If ctrl-z
+ * is inputted again, exits foreground-only mode.
+ * 
+ * @params int signal: signal of the inputted ctrl-z
+ * Source: https://canvas.oregonstate.edu/courses/1798831/pages/exploration-signal-handling-api?module_item_id=20163882
+ **/
+void handle_SIGTSTP(int signal) {
+    char *message = NULL;
+
+    if (foregroundOnly == 0) {
+        foregroundOnly = 1;
+        message = "Entering foreground-only mode (& is now ignored)\n: ";
+        write(STDOUT_FILENO, message, 52);
+        fflush(stdout);
+    } else {
+        foregroundOnly = 0;
+        message = "Exiting foreground-only mode\n: ";
+        write(STDOUT_FILENO, message, 32);
+        fflush(stdout);
+    }
 }
