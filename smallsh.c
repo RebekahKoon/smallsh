@@ -119,7 +119,7 @@ void readArguments(struct command *userCommand) {
  **/
 char *expandVariable(char *variable) {
     int length = strlen(variable);
-    char *expandedVar = malloc(sizeof(char) * 2048);
+    char *expandedVar = malloc(sizeof(char) * 2049);
 
     // Finding all instances of "$$" in the variable
     for (int i = 0; i < length; i++) {
@@ -135,8 +135,6 @@ char *expandVariable(char *variable) {
     }
 
     return expandedVar;
-
-    free(expandedVar);
 }
 
 
@@ -156,16 +154,19 @@ void changeDirectory(char *path, int numArguments) {
     char *expandedVar;
 
     if (numArguments == 1) {
+        // Going to the home directory
         directory = getenv("HOME");
         chdir(directory);
         getcwd(cwd, sizeof(cwd));
     } else if (strstr(path, "$$") != NULL) {
+        // Need to expand the variable then go to that directory
         expandedVar = expandVariable(path);
         printf("%s\n", expandedVar);
         fflush(stdout);
         chdir(path);
         getcwd(cwd, sizeof(cwd));
     } else {
+        // Go to the directory
         chdir(path);
         getcwd(cwd, sizeof(cwd));
     }
@@ -183,9 +184,11 @@ void changeDirectory(char *path, int numArguments) {
  **/
 void findStatus(int status) {
     if (WIFEXITED(status)) {
+        // Process exited normally
         printf("exit value %d\n", WEXITSTATUS(status));
         fflush(stdout);
     } else {
+        // Process exited due to a signal
         printf("terminated by signal %d\n", WTERMSIG(status));
         fflush(stdout);
     }
@@ -224,6 +227,7 @@ int executeOtherCommand(struct command *userCommand, int status) {
 
     // Child process
     case 0:
+        // Ignoring ctrl-z
         ignore_SIGTSTP();
 
         // ctrl-c can cancel foreground process
@@ -232,25 +236,25 @@ int executeOtherCommand(struct command *userCommand, int status) {
         }
 
         if (userCommand->background == 1) {
-            // If input redirection not specified
+            // If input redirection not specified, redirects to /dev/null
             if (userCommand->inputFile == NULL) {
                 userCommand->inputFile = "/dev/null";
                 redirectInput(userCommand->inputFile);
             }
 
-            // If output redirection not specified
+            // If output redirection not specified, redirects to /dev/null
             if (userCommand->outputFile == NULL) {
                 userCommand->outputFile = "/dev/null";
                 redirectOutput(userCommand->outputFile);
             }
         }
 
-        // If input file argument
+        // If input file argument, redirects input to file
         if (userCommand->inputFile != NULL) {
             redirectInput(userCommand->inputFile);
         }
 
-        // If output file argument
+        // If output file argument, redirects output to file
         if (userCommand->outputFile != NULL) {
             redirectOutput(userCommand->outputFile);
         }
@@ -287,6 +291,8 @@ int executeOtherCommand(struct command *userCommand, int status) {
         printf("background pid %d is done: ", childPid);
         findStatus(status);
     }
+
+    redefine_SIGTSTP();
 
     return status;
 }
@@ -359,7 +365,7 @@ void redirectOutput(char *outputFile) {
  * Sources: https://stackoverflow.com/questions/14558068/c-kill-all-processes
  **/
 void terminateProcesses() {
-    // Killing processes
+    // Killing all currently running processes
     printf("\nKilling any running processes...\n");
     fflush(stdout);
     kill(0, SIGKILL);
@@ -409,9 +415,12 @@ void redefine_SIGTSTP() {
 
 
 /*
+ * Allows the default action of ctrl-c.
  * 
+ * Source: https://canvas.oregonstate.edu/courses/1798831/pages/exploration-signal-handling-api?module_item_id=20163882
  */
 void allow_SIGINT() {
+    // Default action of ctrl-c
     SIGINT_action.sa_handler = SIG_DFL;
     sigfillset(&SIGINT_action.sa_mask);
     SIGINT_action.sa_flags = 0;
@@ -430,11 +439,13 @@ void handle_SIGTSTP(int signal) {
     char *message = NULL;
 
     if (foregroundOnly == 0) {
+        // Background processes are not allowed
         foregroundOnly = 1;
         message = "Entering foreground-only mode (& is now ignored)\n: ";
         write(STDOUT_FILENO, message, 52);
         fflush(stdout);
     } else {
+        // Background processes are allowed
         foregroundOnly = 0;
         message = "Exiting foreground-only mode\n: ";
         write(STDOUT_FILENO, message, 32);

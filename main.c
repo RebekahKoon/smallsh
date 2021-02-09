@@ -28,7 +28,6 @@ int main() {
         }
 
         free(userCommand);
-        redefine_SIGTSTP();
 
         input = userInput(input);
     }
