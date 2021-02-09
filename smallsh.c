@@ -165,6 +165,7 @@ void changeDirectory(char *path, int numArguments) {
         fflush(stdout);
         chdir(path);
         getcwd(cwd, sizeof(cwd));
+        free(expandedVar);
     } else {
         // Go to the directory
         chdir(path);
